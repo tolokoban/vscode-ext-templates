@@ -1,5 +1,7 @@
 import * as JSON5 from "json5"
 import * as Path from "path"
+import { assertType } from "@tolokoban/type-guards"
+
 import apply from "./apply"
 import {
     filterExists,
@@ -11,14 +13,21 @@ import {
     makeDirsIfNeeded,
     saveTextFile,
 } from "./files"
-import { assertObject, assertString, assertStringArray } from "./guards"
 import { askParamsValues } from "./params"
 import { warn } from "./print"
 import { openFileInEditor } from "./utils"
+import { parseTemplateFunction, TemplateFunction } from "./function"
 
 export interface TemplateParam {
     name: string
     label: string
+}
+
+interface TemplateDefinition {
+    name: string
+    params?: { [name: string]: string }
+    vars?: { [name: string]: string }
+    open?: string | string[]
 }
 
 export default class Template {
@@ -31,11 +40,21 @@ export default class Template {
                 const definition = loadJsonFile(Path.resolve(path, "@.json5"))
                 if (!definition) continue
 
-                const { name, params, open } = definition
-                assertString(name, "name")
-                assertObject(params, "params")
+                assertType<TemplateDefinition>(definition, {
+                    name: "string",
+                    params: ["?", ["map", "string"]],
+                    vars: ["?", ["map", "string"]],
+                    open: ["?", ["|", "string", ["array", "string"]]],
+                })
+                const { name, params, vars, open } = definition
                 templates.push(
-                    new Template(name, path, castOpenParam(open), params)
+                    new Template(
+                        name,
+                        path,
+                        castOpenParam(open),
+                        params ?? {},
+                        vars ?? {}
+                    )
                 )
             } catch (ex) {
                 warn("Invalid template definition!")
@@ -48,11 +67,14 @@ export default class Template {
 
     public readonly params: Record<string, TemplateParam> = {}
 
+    public readonly vars: Record<string, TemplateFunction> = {}
+
     private constructor(
         public readonly name: string,
         public readonly path: string,
         private readonly open: string[],
-        params: Record<string, unknown>
+        params: Record<string, unknown>,
+        vars: Record<string, unknown>
     ) {
         for (const key of Object.keys(params)) {
             const val = params[key]
@@ -62,6 +84,10 @@ export default class Template {
                     label: val,
                 }
             }
+        }
+        for (const key of Object.keys(vars)) {
+            const val = vars[key]
+            this.vars[key] = parseTemplateFunction(val)
         }
     }
 
@@ -92,7 +118,7 @@ export default class Template {
                 warn("Unable to read this file: ", src)
                 return false
             }
-            saveTextFile(dst, apply(content, params))
+            saveTextFile(dst, apply(dst, content, params, this.vars))
         }
         srcFiles.forEach((src, idx) => {
             if (!this.open.includes(src)) return
@@ -104,9 +130,8 @@ export default class Template {
     }
 }
 
-function castOpenParam(open: unknown): string[] {
+function castOpenParam(open?: string | string[]): string[] {
     if (!open) return []
-    if (typeof open === "string") return [open]
-    assertStringArray(open, ".open")
-    return open
+
+    return typeof open === "string" ? [open] : open
 }

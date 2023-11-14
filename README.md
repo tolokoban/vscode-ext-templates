@@ -22,9 +22,9 @@ Let's take an example. Here is the tree view of a template:
 ```
 MyTemplate/
   @.json5
-  {{name}}/
-    {{name}}.module.css
-    {{name}}.ts
+  {{nameKebab}}/
+    {{nameKebab}}.module.css
+    {{namePascal}}.ts
     index.ts
 ```
 
@@ -36,7 +36,11 @@ Here is the content of `@.json5` which is the template definition:
     params: {
         name: "Component's name"
     },
-    open: "{{name}}/{{name}}.ts"
+    vars: {
+        namePascal: "pascal($name)",
+        nameKebab: "kebab($name)"
+    },
+    open: "{{nameKebab}}/{{namePascal}}.ts"
 }
 ```
 
@@ -78,7 +82,28 @@ Examples:
 
 ### params
 
-an object of all the parameters to use in placeholders.
+An object of all the parameters the user has to enter.
+Parameters can be used in placeholders (ex: `"{{name}}/{{name}}.tsx"`, `class {{name}} {`, ...).
+
+In the following example, the user will bw prompted with "Component's name"
+and their input will be stored in the param `name`:
+
+```js
+{
+    params: {
+        name: "Component's name"
+    }
+}
+```
+
+### vars
+
+* `cap(str)`: Set the first char upper case.
+* `uncap(str)`: Set the first char lower case.
+* `camel(str)`: camelCase.
+* `pascal(str)`: PascalCase.
+* `snake(str)`: snake_case.
+* `kebab(str)`: kebab-case.
 
 ## Extension Settings
 
