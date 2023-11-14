@@ -1,8 +1,5 @@
-import {
-    TemplateFunction,
-    TemplateFunctionContext,
-    TemplateFunctionToken,
-} from "./types"
+import { TemplateFunction, TemplateFunctionContext } from "./types"
+import { cap, splitCase } from "./utils"
 
 export const makeFunctionCamel = makeCase("", s => s.toLowerCase())
 

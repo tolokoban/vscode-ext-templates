@@ -98,8 +98,8 @@ and their input will be stored in the param `name`:
 
 ### vars
 
-* `cap(str)`: Set the first char upper case.
-* `uncap(str)`: Set the first char lower case.
+Here is the list of the functions we can use in `vars` values:
+
 * `camel(str)`: camelCase.
 * `pascal(str)`: PascalCase.
 * `snake(str)`: snake_case.

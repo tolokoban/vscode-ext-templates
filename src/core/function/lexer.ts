@@ -5,8 +5,8 @@ const RULES: { [name in EnumTemplateFunctionToken]: RegExp } = {
     SPC: makeRegExp("[ \t\r\n,]+"),
     VAR: makeRegExp("\\$[a-z]+[a-z0-9_]*"),
     FUN: makeRegExp("[a-z]+[a-z0-9_]*"),
-    PAR_OPEN: makeRegExp("("),
-    PAR_CLOSE: makeRegExp(")"),
+    PAR_OPEN: makeRegExp("\\("),
+    PAR_CLOSE: makeRegExp("\\)"),
 }
 
 function makeRegExp(pattern: string): RegExp {
@@ -16,10 +16,9 @@ function makeRegExp(pattern: string): RegExp {
 export function parse(code: string): TemplateFunctionToken[] {
     const tokens: TemplateFunctionToken[] = []
     let cursor = 0
-    while (cursor < code.length - 1) {
+    while (cursor < code.length) {
         const token = findToken(code, cursor)
         cursor += token.value.length
-        code = code.substring(cursor)
         if (token.type === "SPC") continue
 
         tokens.push(token)
@@ -31,8 +30,8 @@ function findToken(code: string, cursor: number): TemplateFunctionToken {
     for (const key of Object.keys(RULES)) {
         const type = key as EnumTemplateFunctionToken
         const rx = RULES[type]
-        rx.lastIndex = cursor
-        const match = rx.exec(code)
+        rx.lastIndex = -1
+        const match = rx.exec(code.substring(cursor))
         if (match) {
             return {
                 type,

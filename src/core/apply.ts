@@ -11,7 +11,8 @@ export default function apply(
         path,
     }
     let out = text
-    for (const key of Object.keys(params)) {
+    const keys = [...Object.keys(params), ...Object.keys(vars)]
+    for (const key of keys) {
         const val = getParamValue(key, params, vars, ctx)
         if (typeof val !== "string") continue
 

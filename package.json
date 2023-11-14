@@ -2,11 +2,11 @@
     "name": "tolokoban-templates",
     "displayName": "tolokoban-templates",
     "description": "Quick customizable templates available in the file epxlorer",
-    "version": "0.2.0",
+    "version": "0.4.0",
     "publisher": "tolokoban",
     "icon": "logo.jpg",
     "engines": {
-        "vscode": "^1.75.0"
+        "vscode": "^1.84.2"
     },
     "categories": [
         "Other"
@@ -55,6 +55,7 @@
         "@typescript-eslint/eslint-plugin": "^6.11.0",
         "@typescript-eslint/parser": "^6.11.0",
         "@vscode/test-electron": "^2.3.6",
+        "@vscode/vsce": "^2.22.0",
         "eslint": "^8.53.0",
         "glob": "^10.3.10",
         "mocha": "^10.2.0",

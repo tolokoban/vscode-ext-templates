@@ -1,4 +1,4 @@
-import * as JSON5 from "json5"
+import * as vscode from "vscode"
 import * as Path from "path"
 import { assertType } from "@tolokoban/type-guards"
 
@@ -57,9 +57,12 @@ export default class Template {
                     )
                 )
             } catch (ex) {
-                warn("Invalid template definition!")
-                warn("   ", path)
-                warn("   ", JSON5.stringify(ex))
+                console.error(ex)
+                warn(`Invalid template definition!    \n${path}`)
+                if (ex instanceof Error) warn(ex.message)
+                vscode.workspace
+                    .openTextDocument(vscode.Uri.file(path))
+                    .then(doc => vscode.window.showTextDocument(doc))
             }
         }
         return templates
@@ -73,8 +76,8 @@ export default class Template {
         public readonly name: string,
         public readonly path: string,
         private readonly open: string[],
-        params: Record<string, unknown>,
-        vars: Record<string, unknown>
+        params: Record<string, string>,
+        vars: Record<string, string>
     ) {
         for (const key of Object.keys(params)) {
             const val = params[key]
@@ -98,10 +101,16 @@ export default class Template {
         if (!params) return false
 
         const dstDirs = srcDirs.map(relativePath =>
-            Path.resolve(destination, apply(relativePath, params))
+            Path.resolve(
+                destination,
+                apply(destination, relativePath, params, this.vars)
+            )
         )
         const dstFiles = srcFiles.map(relativePath =>
-            Path.resolve(destination, apply(relativePath, params))
+            Path.resolve(
+                destination,
+                apply(destination, relativePath, params, this.vars)
+            )
         )
         const alreadyExistingFiles = dstFiles.filter(filterExists)
         if (alreadyExistingFiles.length > 0) {

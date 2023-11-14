@@ -8,34 +8,48 @@ import { TokenCrawler } from "./crawler"
 import { parse } from "./lexer"
 import { TemplateFunction, TemplateFunctionContext } from "./types"
 
+type Fatal = (message: string) => never
+
 export function parseTemplateFunction(code: string): TemplateFunction {
+    let err: Error | null = null
     const tokens = new TokenCrawler(parse(code))
-    const func = scanFunction(tokens)
-    if (!func) throw Error(`Unable to parse this code!`)
+    const func = scanFunction(tokens, (message: string) => {
+        err = new Error(message)
+        throw err
+    })
+    if (!func)
+        throw Error(
+            `Unable to parse this code: "${code}"!\n${
+                err ? (err as Error).message : ""
+            }`
+        )
 
     return func
 }
 
-function scanFunction(tokens: TokenCrawler): TemplateFunction | null {
+function scanFunction(
+    tokens: TokenCrawler,
+    fatal: Fatal
+): TemplateFunction | null {
     tokens.begin()
     try {
         const token = tokens.next()
-        if (!token) throw Error("No more tokens!")
+        if (!token) fatal("No more tokens!")
 
         if (token.type === "VAR") {
             tokens.commit()
             return (context: TemplateFunctionContext) => {
-                const value = context.constants[token.value]
+                const value = context.constants[token.value.substring(1)]
                 if (typeof value !== "string") {
-                    throw Error(`Unknown param: "${token.value}"!`)
+                    fatal(`Unknown param: "${token.value}"!`)
                 }
                 return value
             }
         }
-        if (token.type !== "FUN") throw Error(`Function name expected!`)
+        if (token.type !== "FUN") fatal(`Function name expected!`)
 
         const funcName = token.value
-        const funcArgs = scanArgs(tokens)
+        const funcArgs = scanArgs(tokens, fatal)
         if (!funcArgs) throw Error("Missing function args!")
         tokens.commit()
         return makeFunction(funcName, funcArgs)
@@ -45,19 +59,22 @@ function scanFunction(tokens: TokenCrawler): TemplateFunction | null {
     }
 }
 
-function scanArgs(tokens: TokenCrawler): TemplateFunction[] | null {
+function scanArgs(
+    tokens: TokenCrawler,
+    fatal: Fatal
+): TemplateFunction[] | null {
     tokens.begin()
     try {
-        if (!tokens.next("PAR_OPEN")) throw Error("Expected open parenthesis!")
+        if (!tokens.next("PAR_OPEN")) fatal("Expected open parenthesis!")
 
         const args: TemplateFunction[] = []
         while (true) {
-            const arg = scanFunction(tokens)
+            const arg = scanFunction(tokens, fatal)
             if (arg) {
                 args.push(arg)
             } else {
                 if (!tokens.next("PAR_CLOSE")) {
-                    throw Error("Expected close parenthesis!")
+                    fatal("Expected close parenthesis!")
                 }
                 return args
             }
