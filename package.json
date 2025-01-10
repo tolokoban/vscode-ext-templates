@@ -2,7 +2,7 @@
     "name": "tolokoban-templates",
     "displayName": "tolokoban-templates",
     "description": "Quick customizable templates available in the file epxlorer",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "publisher": "tolokoban",
     "icon": "logo.jpg",
     "engines": {
