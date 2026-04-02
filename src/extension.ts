@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode"
 import { getProjectAndTemplatesRoot } from "./core/files"
+import { LICENSES } from "./core/licenses"
 import { fatal, success } from "./core/print"
 import { selectTemplate } from "./core/select"
 import Template from "./core/template"
@@ -9,11 +10,6 @@ import Template from "./core/template"
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-    // This line of code will only be executed once when your extension is activated
-    console.log(
-        'Congratulations, your extension "tolokoban-templates" is now active!'
-    )
-
     const disposableForApplyTemplate = vscode.commands.registerCommand(
         "tolokoban-templates.applyTemplate",
         async (folderName: vscode.Uri) => {
@@ -32,12 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return
             }
             const template = await selectTemplate(templates)
-            console.log("🚀 [extension] template = ", template) // @FIXME: Remove this line written on 2023-02-06 at 10:58
-            if (!template) {
-                console.warn("Template application has been cancelled.")
-
-                return
-            }
+            if (!template) return
 
             template.copyTo(folderName.path)
             success("Done!")
@@ -59,11 +50,11 @@ export function activate(context: vscode.ExtensionContext) {
                 const { templatesRoot } = getProjectAndTemplatesRoot(
                     folder.uri.path
                 )
-                console.log("🚀 [extension] templatesRoot = ", templatesRoot) // @FIXME: Remove this line written on 2023-02-06 at 12:17
                 if (templatesRoot) {
                     vscode.commands.executeCommand(
                         "vscode.openFolder",
-                        vscode.Uri.file(templatesRoot)
+                        vscode.Uri.file(templatesRoot),
+                        true
                     )
                 }
             }
@@ -71,7 +62,51 @@ export function activate(context: vscode.ExtensionContext) {
     )
 
     context.subscriptions.push(disposableForEditTemplates)
+
+    const disposableForLicense = vscode.commands.registerCommand(
+        "tolokoban-templates.license",
+        async () => {
+            const keys = Object.keys(LICENSES).map(getLicenseTitle)
+            const selection = await vscode.window.showQuickPick(keys, {
+                placeHolder: "Choose a license for this project:",
+            })
+            if (!selection) return
+
+            const [key] = selection.split(":")
+            const workspaceFolders = vscode.workspace.workspaceFolders
+            if (!workspaceFolders) {
+                fatal("No workspace open yet!")
+                return
+            }
+
+            const rootUri = workspaceFolders[0].uri
+            const licenseUri = vscode.Uri.joinPath(rootUri, "LICENSE")
+            const content = LICENSES[key as keyof typeof LICENSES]
+            await vscode.workspace.fs.writeFile(
+                licenseUri,
+                Buffer.from(content)
+            )
+            vscode.env.openExternal(
+                vscode.Uri.parse(
+                    `https://choosealicense.com/licenses/${key}`
+                )
+            )
+            success("Done!")
+        }
+    )
+
+    context.subscriptions.push(disposableForLicense)
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
+
+
+function getLicenseTitle(key: string): string {
+    const content = LICENSES[key]
+    if (!content) return "N/A"
+
+    const pos = content.indexOf("\n")
+    const title = content.slice(0, pos).trim()
+    return `${key}: ${title}`
+}

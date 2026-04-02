@@ -10,7 +10,7 @@ export const makeFunctionPascal = makeCase("", s => cap(s.toLowerCase()))
 
 export const makeFunctionKebab = makeCase("-", s => s.toLowerCase())
 
-export const makeFunctionSnake = makeCase("-", s => s.toLowerCase())
+export const makeFunctionSnake = makeCase("_", s => s.toLowerCase())
 
 function makeCase(sep: string, map: (text: string, index: number) => string) {
     return (args: TemplateFunction[]): TemplateFunction => {

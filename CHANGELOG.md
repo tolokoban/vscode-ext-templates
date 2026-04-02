@@ -1,9 +1,10 @@
 # Change Log
 
-All notable changes to the "tolokoban-templates" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## [Unreleased]
 
-- Initial release
+## [0.5.0]
+
+### Added
+
+- Actions are available in a treeview context menu `Tolokoban`.
+- Quick way of choosing a license.
